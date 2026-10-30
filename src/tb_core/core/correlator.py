@@ -1,5 +1,5 @@
 from typing import List, Dict
-from traceback.core.models import Event, Incident
+from tb_core.core.models import Event, Incident
 
 class IncidentCorrelator:
     def correlate(self, events: List[Event]) -> List[Incident]:

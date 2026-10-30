@@ -1,4 +1,4 @@
-from traceback.core.models import Event, Incident
+from tb_core.core.models import Event, Incident
 from typing import Optional
 
 class RootCauseAnalyzer:

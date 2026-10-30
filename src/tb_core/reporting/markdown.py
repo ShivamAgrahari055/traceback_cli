@@ -1,4 +1,4 @@
-from traceback.core.models import Incident, Event
+from tb_core.core.models import Incident, Event
 from typing import Optional
 
 class MarkdownReporter:
@@ -8,13 +8,13 @@ class MarkdownReporter:
         report += f"**Summary**: {incident.summary or 'No summary provided'}\n\n"
         
         if root_cause:
-            report += "## 🚩 Root Cause Identified\n"
+            report += "##  Root Cause Identified\n"
             report += f"> **{root_cause.level}**: {root_cause.message}\n"
             report += f"Found at: {root_cause.timestamp}\n\n"
         
-        report += "## 🕒 Timeline\n"
+        report += "##  Timeline\n"
         for i, event in enumerate(incident.events, 1):
-            prefix = "👉 " if event == root_cause else "  "
+            prefix = " " if event == root_cause else "  "
             report += f"{prefix}{i}. [{event.timestamp}] {event.level}: {event.message}\n"
         
         return report

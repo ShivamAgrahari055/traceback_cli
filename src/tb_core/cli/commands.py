@@ -15,7 +15,7 @@ def analyse(
     output: Optional[str] = typer.Option(None, "--output", "-o", help="Path to save the markdown report")
 ):
     """Analyse a log file and reconstruct the incident timeline."""
-    typer.echo(f"🔍 Analysing {file_path}...")
+    typer.echo(f" Analysing {file_path}...")
     
     # Initialize components
     loader = LogLoader()
@@ -41,7 +41,7 @@ def analyse(
         if output:
             with open(output, "w", encoding="utf-8") as f:
                 f.write(report)
-            typer.echo(f"✅ Report saved to {output}")
+            typer.echo(f" Report saved to {output}")
         else:
             typer.echo("\n" + report)
 
