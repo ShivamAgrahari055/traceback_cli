@@ -1,49 +1,49 @@
-from tb_core.core.models import Event, Incident
+from traceback.core.models import Event, Incident
 from typing import Optional
 
 class RootCauseAnalyzer:
     def __init__(self):
-        # Define what constitutes a "Root Cause" versus a "Symptom"
-        # Root causes are usually specific exceptions or system failures
-        self.root_cause_keywords = [
+        # Define root-cause indicators (errors that usually trigger a crash)
+        self.root_indicators = [
             "TypeError", "ValueError", "IndexError", "KeyError", 
             "NullPointerException", "ConnectionTimeout", "PermissionDenied",
-            "OutOfMemory", "DatabaseError", "socket.error"
+            "OutOfMemory", "DatabaseError", "socket.error", "ZeroDivisionError"
+        ]
+        # Define symptom indicators (errors that are usually results of a root cause)
+        self.symptom_indicators = [
+            "HTTP 500", "Internal Server Error", "Controller failed", 
+            "Connection closed", "Task terminated"
         ]
 
     def analyze(self, incident: Incident) -> Optional[Event]:
         """
         Implements the Backtracking Logic:
-        Starts from the end of the incident timeline and moves backward
-        to find the first 'True' root cause.
+        Walks backward from the final event to find the earliest 'True' error.
         """
         events = incident.events
         if not events:
             return None
 
-        # 1. Start from the end (the crash/symptom) and walk backward
+        # 1. Walk backward from the end of the timeline
         for event in reversed(events):
-            # Check if the message contains any of our root cause keywords
-            # or if the exception field is populated.
-            is_root = False
-            
-            # Check the exception field first
-            if event.exception:
-                is_root = True
-            
-            # Check the message for root cause keywords
-            if not is_root and event.message:
-                if any(keyword.lower() in event.message.lower() for keyword in self.root_cause_keywords):
-                    is_root = True
-            
-            # If we found a root cause, return it immediately
-            if is_root:
+            # Check if this event is a "Root Cause" (not just a symptom)
+            if self._is_root_cause(event):
                 return event
-
-        # Fallback: If no specific root cause is found, the first error in the timeline 
-        # is usually the most likely trigger.
+        
+        # Fallback: If no specific root cause is found, return the first ERROR event
         for event in events:
             if event.level == "ERROR":
                 return event
-        
+                
         return None
+
+    def _is_root_cause(self, event: Event) -> bool:
+        # An event is a root cause if it contains a root indicator AND NOT a symptom indicator
+        msg = event.message.lower()
+        
+        # Root Cause indicator match
+        has_root = any(keyword.lower() in msg for keyword in self.root_indicators)
+        # Symptom indicator match
+        has_symptom = any(keyword.lower() in msg for keyword in self.symptom_indicators)
+        
+        return has_root and not has_symptom
