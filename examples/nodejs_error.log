@@ -1,0 +1,9 @@
+2023-10-27 10:30:01 INFO [REQ-101] Server started
+2023-10-27 10:30:05 INFO [REQ-101] POST /api/login - Request received
+2023-10-27 10:30:05 INFO [REQ-101] Database connection established
+2023-10-27 10:30:06 INFO [REQ-101] User lookup started for user_id=123
+2023-10-27 10:30:06 ERROR [REQ-101] TypeError: Cannot read properties of null (reading 'email')
+2023-10-27 10:30:06 ERROR [REQ-101] Login controller failed: Internal Server Error
+2023-10-27 10:30:07 ERROR [REQ-101] HTTP 500 returned to client
+2023-10-27 10:30:10 INFO [REQ-102] POST /api/status - Request received
+2023-10-27 10:30:11 INFO [REQ-102] Status check successful

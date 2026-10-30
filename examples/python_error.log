@@ -1,0 +1,6 @@
+2023-10-27 11:00:01 INFO [TRC-99] Initializing module
+2023-10-27 11:00:05 INFO [TRC-99] Fetching data from remote API
+2023-10-27 11:00:08 WARN [TRC-99] API response delayed (timeout 2s)
+2023-10-27 11:00:10 ERROR [TRC-99] ConnectionTimeout: Remote server not responding
+2023-10-27 11:00:10 ERROR [TRC-99] DataProcessor failed to execute
+2023-10-27 11:00:11 ERROR [TRC-99] Task terminated with exit code 1
