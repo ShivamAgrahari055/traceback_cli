@@ -1,6 +1,6 @@
 import os
 from typing import List
-from traceback.core.models import Event
+from tb_core.core.models import Event
 from .text_parser import TextParser
 
 class LogLoader:

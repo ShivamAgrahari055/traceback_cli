@@ -1,6 +1,6 @@
 import re
 from datetime import datetime
-from traceback.core.models import Event
+from ..core.models import Event
 
 class TextParser:
     def __init__(self):

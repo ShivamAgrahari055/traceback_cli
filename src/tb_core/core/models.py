@@ -20,4 +20,5 @@ class Incident(BaseModel):
     root_cause_event: Optional[Event] = None
     events: List[Event] = []
     severity: str = "INFO"
+    root_cause: Optional[Event] = None
     summary: Optional[str] = None
