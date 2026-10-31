@@ -42,6 +42,13 @@ class TextParser:
             if m:
                 request_id = m.group(1)
 
+        # Extract a leading "service:" prefix (e.g. "api: Request received")
+        service = None
+        svc_match = re.match(r"^([A-Za-z][A-Za-z0-9_-]*):\s+(.*)$", rest)
+        if svc_match:
+            service = svc_match.group(1)
+            rest = svc_match.group(2)
+
         try:
             ts = datetime.strptime(ts_str, "%Y-%m-%d %H:%M:%S")
         except ValueError:
@@ -53,6 +60,7 @@ class TextParser:
                 timestamp=ts,
                 level=level.upper(),
                 message=rest,
+                service=service,
                 source_file=Path(source_file).name if source_file else None,
                 request_id=request_id,
             )

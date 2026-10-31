@@ -29,6 +29,25 @@ app = typer.Typer(
 VERSION = "TraceBack 0.1.0"
 
 
+def version_callback(value: bool):
+    if value:
+        typer.echo(VERSION)
+        raise typer.Exit()
+
+
+@app.callback()
+def main(
+    version: bool = typer.Option(
+        False,
+        "--version",
+        callback=version_callback,
+        is_eager=True,
+        help="Show the version and exit.",
+    ),
+):
+    pass
+
+
 def _echo_success(msg: str):
     typer.secho(msg, fg=typer.colors.GREEN)
 
@@ -248,6 +267,31 @@ def report_cmd(
         typer.echo(f"[red]No events found for incident '{incident_id}'.[/red]")
         raise typer.Exit(1)
 
+    # Convert stored event dicts back to Event objects
+    event_objs = []
+    for ev in events:
+        try:
+            ts = datetime.fromisoformat(ev["timestamp"]) if ev.get("timestamp") else None
+        except ValueError:
+            ts = None
+        event_objs.append(
+            Event(
+                event_id=ev.get("event_id", ""),
+                timestamp=ts,
+                level=ev.get("level", "INFO"),
+                message=ev.get("message", ""),
+                service=ev.get("service"),
+                request_id=ev.get("request_id"),
+                trace_id=ev.get("trace_id"),
+                session_id=ev.get("session_id"),
+                source_file=ev.get("source_file"),
+                line_number=ev.get("line_number"),
+                exception_type=ev.get("exception_type"),
+                stack_trace=ev.get("stack_trace"),
+                metadata=ev.get("metadata", {}),
+            )
+        )
+
     report = {
         "incident": Incident(
             incident_id=incident_id,
@@ -255,9 +299,9 @@ def report_cmd(
             severity=row["severity"] or "INFO",
             start_time=datetime.fromisoformat(row["start_time"]) if row["start_time"] else None,
             end_time=datetime.fromisoformat(row["end_time"]) if row["end_time"] else None,
-            related_events=[],
+            related_events=event_objs,
             primary_error=row["primary_error"] or "Unknown",
-            affected_services=[],
+            affected_services=list({e.service for e in event_objs if e.service}),
             confidence=row["confidence"] or "MEDIUM",
         ),
         "title": row["title"] or "Incident",
