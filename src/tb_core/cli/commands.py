@@ -18,6 +18,9 @@ from tb_core.security.redactor import SecretRedactor
 from tb_core.reporting.markdown import MarkdownReporter
 from tb_core.reporting.json_report import JSONReporter
 from tb_core.storage.database import IncidentDatabase
+from tb_core.ai.config import AIConfig
+from tb_core.ai.manager import ProviderManager
+from tb_core.ai.rca import enrich_rca, get_ai_config, is_ai_available
 
 app = typer.Typer(
     name="traceback",
@@ -103,9 +106,46 @@ def analyse_cmd(
 
     db = IncidentDatabase()
 
+    ai_config = get_ai_config()
+    ai_manager = ProviderManager(ai_config)
+
     for g in grouped:
         report = _build_report(g, analyzer, cascade, rec_builder, redactor, output)
         report_incident_id = report["incident"].incident_id
+
+        # Enrich with LLM reasoning if AI is available
+        if ai_config.enabled:
+            redacted_events = []
+            for ev in g.events:
+                redacted_events.append(
+                    Event(
+                        event_id=ev.event_id,
+                        timestamp=ev.timestamp,
+                        level=ev.level,
+                        message=redactor.redact(ev.message) if ev.message else None,
+                        service=ev.service,
+                        request_id=ev.request_id,
+                        trace_id=ev.trace_id,
+                        session_id=ev.session_id,
+                        source_file=ev.source_file,
+                        line_number=ev.line_number,
+                        exception_type=ev.exception_type,
+                        stack_trace=redactor.redact(ev.stack_trace)
+                        if ev.stack_trace else None,
+                        metadata=dict(ev.metadata),
+                    )
+                )
+            ai_enriched = enrich_rca(
+                incident_id=report_incident_id,
+                title=report["title"],
+                severity=report["severity"],
+                events=g.events,
+                deterministic_analysis=report["root_cause"],
+                redacted_events=redacted_events,
+                ai_enabled=ai_config.enabled,
+                provider_manager=ai_manager,
+            )
+            report["root_cause"] = ai_enriched
 
         db.save_incident(
             incident_id=report_incident_id,
@@ -363,6 +403,116 @@ def tui_cmd():
         raise typer.Exit(1)
     app_tui = TraceBackApp()
     app_tui.run()
+
+
+@app.command("ask")
+def ask_cmd(
+    incident_id: str = typer.Argument(..., help="Incident ID to ask about"),
+    question: str = typer.Argument(..., help="Question to ask about the incident"),
+):
+    """Ask a question about a specific incident (requires AI)."""
+    ai_config = get_ai_config()
+    if not ai_config.enabled:
+        typer.echo(
+            "[red]AI is disabled. Set TRACEBACK_AI_ENABLED=true and "
+            "TRACEBACK_AI_API_KEY to use this command.[/red]"
+        )
+        raise typer.Exit(1)
+
+    if not ai_config.api_key:
+        typer.echo(
+            "[red]No API key configured. Set TRACEBACK_AI_API_KEY.[/red]"
+        )
+        raise typer.Exit(1)
+
+    db = IncidentDatabase()
+    row = db.get_incident(incident_id)
+    if not row:
+        typer.echo(f"[red]Incident '{incident_id}' not found in history.[/red]")
+        raise typer.Exit(1)
+
+    events = db.get_events_for_incident(incident_id)
+    if not events:
+        typer.echo(f"[red]No events found for incident '{incident_id}'.[/red]")
+        raise typer.Exit(1)
+
+    # Convert stored event dicts back to Event objects
+    event_objs = []
+    for ev in events:
+        try:
+            ts = datetime.fromisoformat(ev["timestamp"]) if ev.get("timestamp") else None
+        except ValueError:
+            ts = None
+        event_objs.append(
+            Event(
+                event_id=ev.get("event_id", ""),
+                timestamp=ts,
+                level=ev.get("level", "INFO"),
+                message=ev.get("message", ""),
+                service=ev.get("service"),
+                request_id=ev.get("request_id"),
+                trace_id=ev.get("trace_id"),
+                session_id=ev.get("session_id"),
+                source_file=ev.get("source_file"),
+                line_number=ev.get("line_number"),
+                exception_type=ev.get("exception_type"),
+                stack_trace=ev.get("stack_trace"),
+                metadata=ev.get("metadata", {}),
+            )
+        )
+
+    # Re-run deterministic analysis
+    rules_engine = RulesEngine()
+    analyzer = RootCauseAnalyzer(rules_engine)
+    cascade = CascadeAnalyzer(rules_engine)
+    rec_builder = RecommendationBuilder()
+
+    group = IncidentGroup(
+        title=row["title"] or "Incident",
+        events=event_objs,
+    )
+    root_cause = analyzer.analyze(group)
+    cascade_chain = cascade.analyze(group)
+    recommendations = rec_builder.build(group, cascade_chain, root_cause)
+
+    deterministic_analysis = {
+        "title": root_cause.get("title", row["title"] or "Incident"),
+        "summary": root_cause.get("summary", ""),
+        "primary_error": root_cause.get("primary_error"),
+        "root_cause_hypothesis": root_cause.get("root_cause_hypothesis"),
+        "supporting_evidence": root_cause.get("supporting_evidence", []),
+        "application_exception": root_cause.get("application_exception"),
+        "downstream_failures": root_cause.get("downstream_failures", []),
+        "user_facing_impact": root_cause.get("user_facing_impact", []),
+        "confidence": root_cause.get("confidence", "LOW"),
+        "confidence_explanation": root_cause.get("confidence_explanation", ""),
+    }
+
+    ai_manager = ProviderManager(ai_config)
+    llm_answer = ai_manager.answer_question(
+        incident_id=incident_id,
+        question=question,
+        events=event_objs,
+        deterministic_analysis=deterministic_analysis,
+    )
+
+    if llm_answer is None:
+        typer.echo(
+            "[red]AI provider failed to answer. Try again later.[/red]"
+        )
+        raise typer.Exit(1)
+
+    typer.echo(f"\n[bold]Question:[/bold] {question}")
+    typer.echo(f"[bold]Answer:[/bold] {llm_answer.answer}")
+    typer.echo(f"[bold]Confidence:[/bold] {llm_answer.confidence}")
+    if llm_answer.event_references:
+        typer.echo("\n[bold]Evidence:[/bold]")
+        for ref in llm_answer.event_references:
+            typer.echo(f"  - {ref.finding} (event: {ref.event_id})")
+    if llm_answer.missing_information:
+        typer.echo("\n[bold]Missing information:[/bold]")
+        for item in llm_answer.missing_information:
+            typer.echo(f"  - {item}")
 
 
 def main():

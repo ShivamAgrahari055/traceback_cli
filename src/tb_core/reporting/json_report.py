@@ -80,7 +80,22 @@ class JSONReporter:
             ],
             "analysis_metadata": {
                 "generated_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+                "ai_enhanced": report.get("ai_enhanced", False),
+                "ai_source": report.get("ai_source"),
             },
+            "ai_analysis": {
+                "summary": report.get("ai_summary"),
+                "root_cause_hypothesis": report.get("ai_root_cause_hypothesis"),
+                "confidence": report.get("ai_confidence"),
+                "confidence_explanation": report.get("ai_confidence_explanation"),
+                "affected_services": report.get("ai_affected_services", []),
+                "causal_chain": report.get("ai_causal_chain", []),
+                "downstream_failures": report.get("ai_downstream_failures", []),
+                "user_facing_impact": report.get("ai_user_facing_impact", []),
+                "debugging_recommendations": report.get("ai_debugging_recommendations", []),
+                "missing_evidence": report.get("ai_missing_evidence", []),
+                "limitations": report.get("ai_limitations", []),
+            } if report.get("ai_enhanced") else None,
             "events": [
                 {
                     "event_id": ev.event_id,

@@ -38,6 +38,7 @@ receives:
 | Database | SQLite |
 | Testing | Pytest |
 | Packaging | pyproject.toml, uv |
+| AI (optional) | OpenAI-compatible provider (no new deps) |
 
 ## Installation
 
@@ -150,6 +151,14 @@ traceback report TB-001 --format json
 traceback tui
 ```
 
+### Ask a question about an incident (requires AI)
+
+```bash
+traceback ask TB-001 "Why did this incident happen?"
+traceback ask TB-001 "Which service should I investigate first?"
+traceback ask TB-001 "What evidence supports the root cause?"
+```
+
 ### Analyse with the multi-service demo
 
 ```bash
@@ -165,8 +174,64 @@ traceback analyse examples/microservices/
 | `traceback show <id>` | Show incident details |
 | `traceback timeline <id>` | View incident timeline |
 | `traceback report <id> --format <md\|json>` | Generate incident report |
+| `traceback ask <id> "<question>"` | Ask AI a question about an incident |
 | `traceback tui` | Launch interactive terminal UI |
 | `traceback --version` | Show version |
+
+## Optional AI Intelligence Layer
+
+TraceBack includes an optional LLM-powered intelligence layer that enriches
+deterministic root-cause analysis with causal explanations, confidence
+calibration, and incident Q&A. The application is **fully functional without
+AI** — it is disabled by default.
+
+### Enable AI
+
+Copy `.env.example` to `.env` and set:
+
+```powershell
+# Enable the AI layer
+$env:TRACEBACK_AI_ENABLED="true"
+
+# Set your API key (kept server-side, never logged)
+$env:TRACEBACK_AI_API_KEY="your-api-key-here"
+
+# Optional: provider, model, base URL
+$env:TRACEBACK_AI_PROVIDER="openai_compatible"
+$env:TRACEBACK_AI_MODEL="gemini-pro"
+$env:TRACEBACK_AI_BASE_URL=""   # blank for OpenAI, set for Groq/local/proxy
+```
+
+### Provider examples
+
+| Provider | `TRACEBACK_AI_PROVIDER` | `TRACEBACK_AI_BASE_URL` | `TRACEBACK_AI_MODEL` |
+|----------|------------------------|------------------------|---------------------|
+| OpenAI | `openai_compatible` | (blank) | `gpt-3.5-turbo` |
+| Groq | `openai_compatible` | `https://api.groq.com/openai/v1` | `mixtral-8x7b-32768` |
+| Local (llama.cpp) | `openai_compatible` | `http://localhost:8080/v1` | `any` |
+| Gemini (via OpenAI proxy) | `openai_compatible` | `https://generativelanguage.googleapis.com/v1beta/openai/` | `gemini-pro` |
+
+### AI commands
+
+When AI is enabled, two new capabilities unlock:
+
+1. **`traceback analyse`** — Automatically enriches the deterministic report with an **AI-Enhanced Investigation** section (root-cause hypothesis, causal chain, confidence explanation, missing evidence, limitations).
+
+2. **`traceback ask <id> "<question>"`** — Incident-specific Q&A with event ID citations:
+
+   ```powershell
+   traceback ask TB-TRC-LOGIN-001 "Why did this incident happen?"
+   traceback ask TB-TRC-LOGIN-001 "Which service should I investigate first?"
+   traceback ask TB-TRC-LOGIN-001 "What evidence supports the root cause?"
+   traceback ask TB-TRC-LOGIN-001 "Explain this to a junior developer"
+   ```
+
+### AI security
+
+- **Secrets redacted before anything is sent** — API keys, passwords, JWTs, connection strings, emails are replaced with `[REDACTED]`
+- **Only incident evidence is transmitted** — never entire log directories
+- **API keys stay server-side** — never logged or displayed
+- **AI is opt-in** — disabled by default; deterministic analysis never calls any external service
 
 ## TUI Screens
 
@@ -233,7 +298,8 @@ Or:
 pytest tests/
 ```
 
-75 tests cover parsers, normalizer, correlator, timeline, analysis, redactor, and reporting.
+99 tests cover parsers, normalizer, correlator, timeline, analysis, redactor,
+reporting, and the optional AI layer (all mocked — no real API calls).
 
 ## Project Structure
 
@@ -250,11 +316,12 @@ traceback-cli/
 │   ├── ingestion/          # Log loading, detection, parsing
 │   ├── core/               # Event models, normalization, correlation
 │   ├── analysis/           # Root cause, cascade, recommendations
+│   ├── ai/                 # Optional LLM intelligence layer (config, models, provider, manager, rca)
 │   ├── security/           # Secret redaction
 │   ├── storage/            # SQLite incident history
 │   ├── reporting/          # Markdown and JSON reports
 │   └── utils/              # Timestamps and helpers
-├── tests/                  # 75 pytest tests
+├── tests/                  # 99 pytest tests
 ├── examples/               # Sample log files
 │   ├── microservices/      # Multi-service demo (frontend, auth, database, api)
 │   ├── nodejs/             # Node.js error log
@@ -274,6 +341,12 @@ LOG INPUT → INGESTION → FORMAT DETECTION → PARSING → NORMALISATION
     → REPORT → CLI/TUI/SQLITE
 ```
 
+The optional AI layer plugs into the root-cause and reporting stages:
+
+```
+DETERMINISTIC RCA → LLM ENRICHMENT (optional) → MARKDOWN/JSON REPORT
+```
+
 See `docs/architecture.md` for the full Mermaid architecture diagram.
 
 ## Limitations
@@ -282,6 +355,8 @@ See `docs/architecture.md` for the full Mermaid architecture diagram.
 - Not for massive-scale distributed observability workloads
 - Correlation relies on request/trace IDs; events without identifiers may be missed
 - AI integration is optional and never used for core event correlation
+- AI layer requires an API key and is disabled by default
+- AI hypotheses are clearly labelled and should be verified against log evidence
 
 ## License
 
