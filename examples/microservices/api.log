@@ -1,0 +1,4 @@
+2023-10-27 10:30:00 INFO [TRC-LOGIN-001] api: Request received at gateway
+2023-10-27 10:30:00 INFO [TRC-LOGIN-001] api: Forwarding request to auth service
+2023-10-27 10:30:02 ERROR [TRC-LOGIN-001] api: Upstream auth service returned error
+2023-10-27 10:30:02 ERROR [TRC-LOGIN-001] api: HTTP 500 returned to client

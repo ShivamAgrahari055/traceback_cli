@@ -1,0 +1,48 @@
+# Byte-compiled / optimized
+__pycache__/
+*.py[c]
+*.pyo
+*.pyd
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+.venv
+
+# Environment files
+.env
+.env.local
+
+# TraceBack local database
+traceback_history.db
+*.db
+
+# Distribution / packaging
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Editor / IDE
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+
+# macOS
+.DS_Store
+
+# Python
+*.pyc
+.python-version
+
+# Testing / coverage
+.pytest_cache/
+.coverage
+htmlcov/
+.ipynb_checkpoints
+
+# Jupyter
+*.ipynb

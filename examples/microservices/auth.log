@@ -1,0 +1,5 @@
+2023-10-27 10:30:00 INFO [TRC-LOGIN-001] auth: Received POST /api/login request from frontend
+2023-10-27 10:30:01 INFO [TRC-LOGIN-001] auth: Validating credentials for user_id=123
+2023-10-27 10:30:01 INFO [TRC-LOGIN-001] auth: Querying database for user record
+2023-10-27 10:30:01 ERROR [TRC-LOGIN-001] auth: NullReferenceException: Cannot read properties of null (reading 'email')
+2023-10-27 10:30:02 ERROR [TRC-LOGIN-001] auth: Login controller failed: Internal Server Error

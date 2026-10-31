@@ -1,0 +1,4 @@
+2023-10-27 10:30:01 INFO [TRC-LOGIN-001] Frontend: Authentication request sent to /api/login
+2023-10-27 10:30:01 INFO [TRC-LOGIN-001] Frontend: Waiting for response from auth service
+2023-10-27 10:30:02 ERROR [TRC-LOGIN-001] Frontend: Received HTTP 500 from backend
+2023-10-27 10:30:02 ERROR [TRC-LOGIN-001] Frontend: Displayed "Login failed" error message to user

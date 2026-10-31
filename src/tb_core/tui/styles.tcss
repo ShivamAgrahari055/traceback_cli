@@ -1,0 +1,222 @@
+/* TraceBack TUI styles — professional dark terminal aesthetic */
+
+Screen {
+    background: #0f111a;
+    color: #e2e8f0;
+}
+
+#title {
+    text-style: bold;
+    color: #38bdf8;
+    text-align: center;
+    margin: 1 0;
+}
+
+#subtitle {
+    color: #94a3b8;
+    text-align: center;
+    margin: 0 0 1 0;
+}
+
+/* Panels */
+Panel {
+    border: solid #334155;
+    background: #171c2b;
+    padding: 1;
+}
+
+Panel#stats {
+    border: solid #38bdf8;
+    background: #101828;
+}
+
+Panel#empty {
+    border: solid #475569;
+    background: #171c2b;
+    color: #94a3b8;
+    text-align: center;
+    padding: 2;
+}
+
+/* DataTable */
+DataTable {
+    background: #0f111a;
+    color: #e2e8f0;
+    header-background: #1e293b;
+    header-color: #38bdf8;
+    border: solid #334155;
+}
+
+DataTable > .datatable--header {
+    background: #1e293b;
+    color: #38bdf8;
+    text-style: bold;
+}
+
+DataTable > .datatable--cursor {
+    background: #38bdf8;
+    color: #0f111a;
+}
+
+/* Buttons */
+Button {
+    background: #1e293b;
+    color: #e2e8f0;
+    border: solid #334155;
+    margin: 0 1;
+}
+
+Button:hover {
+    background: #334155;
+    border: solid #38bdf8;
+}
+
+Button#primary {
+    background: #38bdf8;
+    color: #0f111a;
+}
+
+Button#primary:hover {
+    background: #7dd3fc;
+}
+
+Button#danger {
+    background: #7f1d1d;
+    color: #fecaca;
+}
+
+Button#danger:hover {
+    background: #991b1b;
+}
+
+/* Labels */
+#severity-critical {
+    color: #f87171;
+    text-style: bold;
+}
+
+#severity-error {
+    color: #f87171;
+}
+
+#severity-warning {
+    color: #fbbf24;
+}
+
+#severity-info {
+    color: #60a5fa;
+}
+
+#severity-debug {
+    color: #94a3b8;
+}
+
+#confidence-high {
+    color: #4ade80;
+}
+
+#confidence-medium {
+    color: #fbbf24;
+}
+
+#confidence-low {
+    color: #94a3b8;
+}
+
+/* Footer / help */
+#help {
+    color: #94a3b8;
+    text-align: center;
+    margin: 1 0;
+}
+
+/* Tabs */
+Tabs {
+    background: #171c2b;
+    border: solid #334155;
+}
+
+Tabs > .tabs--active {
+    background: #38bdf8;
+    color: #0f111a;
+    text-style: bold;
+}
+
+/* Scrollable containers */
+ScrollableContainer {
+    background: #0f111a;
+}
+
+#log-detail {
+    background: #0b0d14;
+    color: #cbd5e1;
+    border: solid #334155;
+    padding: 1;
+}
+
+#timeline-list {
+    background: #0f111a;
+}
+
+TimelineItem {
+    border: solid #334155;
+    background: #171c2b;
+    margin: 0 0 1 0;
+    padding: 1;
+}
+
+TimelineItem--error {
+    border-left: thick #f87171;
+}
+
+TimelineItem--warning {
+    border-left: thick #fbbf24;
+}
+
+TimelineItem--info {
+    border-left: thick #60a5fa;
+}
+
+TimelineItem--critical {
+    border-left: thick #f87171;
+    text-style: bold;
+}
+
+/* Input */
+Input {
+    background: #171c2b;
+    color: #e2e8f0;
+    border: solid #334155;
+    margin: 0 1;
+}
+
+Input:focus {
+    border: solid #38bdf8;
+}
+
+/* Select */
+Select {
+    background: #171c2b;
+    color: #e2e8f0;
+    border: solid #334155;
+    margin: 0 1;
+}
+
+Select:focus {
+    border: solid #38bdf8;
+}
+
+/* Static text in panels */
+#incident-summary {
+    color: #e2e8f0;
+}
+
+#evidence-item {
+    color: #cbd5e1;
+    margin: 0 0 1 0;
+}
+
+#recommendation-item {
+    color: #cbd5e1;
+    margin: 0 0 1 0;
+}

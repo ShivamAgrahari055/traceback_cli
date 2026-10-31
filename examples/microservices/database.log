@@ -1,0 +1,4 @@
+2023-10-27 10:30:01 INFO [TRC-LOGIN-001] database: Connection established
+2023-10-27 10:30:01 INFO [TRC-LOGIN-001] database: Query started: SELECT * FROM users WHERE id = 123
+2023-10-27 10:30:01 INFO [TRC-LOGIN-001] database: Query returned 0 rows (user not found)
+2023-10-27 10:30:01 INFO [TRC-LOGIN-001] database: Result: null

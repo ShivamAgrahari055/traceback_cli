@@ -1,4 +1,5 @@
-import sys
+import typer
+
 from tb_core.cli.commands import app
 
 if __name__ == "__main__":

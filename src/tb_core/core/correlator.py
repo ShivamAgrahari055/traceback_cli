@@ -21,10 +21,23 @@ class IncidentCorrelator:
             # Crucial: Sort events chronologically to ensure the timeline is a a-ccurate
             sorted_events = sorted(event_list, key=lambda x: x.timestamp)
             
+            # Determine which identifier was used for grouping
+            req_id = None
+            tr_id = None
+            for ev in sorted_events:
+                if ev.request_id:
+                    req_id = ev.request_id
+                    break
+                if ev.trace_id:
+                    tr_id = ev.trace_id
+                    break
+
             incident = Incident(
                 incident_id=rid,
-                events=sorted_events,
-                severity="INFO" # Default, will be updated by Analyzer
+                related_events=sorted_events,
+                severity="INFO",
+                request_id=req_id,
+                trace_id=tr_id,
             )
             incidents.append(incident)
             

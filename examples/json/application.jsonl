@@ -1,0 +1,4 @@
+{"timestamp": "2023-10-27T10:30:00Z", "level": "INFO", "message": "Request received at gateway", "service": "api", "request_id": "REQ-API-001", "trace_id": "TRC-API-001"}
+{"timestamp": "2023-10-27T10:30:01Z", "level": "INFO", "message": "Forwarding request to auth service", "service": "api", "request_id": "REQ-API-001", "trace_id": "TRC-API-001"}
+{"timestamp": "2023-10-27T10:30:02Z", "level": "ERROR", "message": "Upstream auth service returned error", "service": "api", "request_id": "REQ-API-001", "trace_id": "TRC-API-001", "exception_type": "UpstreamError"}
+{"timestamp": "2023-10-27T10:30:02Z", "level": "ERROR", "message": "HTTP 500 returned to client", "service": "api", "request_id": "REQ-API-001", "trace_id": "TRC-API-001"}
