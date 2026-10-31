@@ -21,7 +21,7 @@ class MarkdownReporter:
         lines: List[str] = []
 
         lines.append(f"# Incident Report: {incident.incident_id}")
-        lines.append(f"**Title:** {incident.title}")
+        lines.append(f"**Title:** {report.get('title', 'Untitled incident')}")
         lines.append("")
         lines.append(f"**Severity:** {report.get('severity', 'INFO')}")
         lines.append(f"**Confidence:** {report.get('confidence', 'MEDIUM')}")
@@ -49,46 +49,96 @@ class MarkdownReporter:
             lines.append(f"{i}. [{ts}] **{level}** [{service or 'unknown'}] {message}")
         lines.append("")
 
+        # Root-Cause Analysis section with new causal categories
         root_cause = report.get("root_cause")
         if root_cause:
             lines.append("## Root-Cause Analysis")
             lines.append("")
             lines.append(f"**Title:** {root_cause.get('title', 'N/A')}")
             lines.append(f"**Confidence:** {root_cause.get('confidence', 'N/A')}")
-            lines.append("")
+            conf_exp = root_cause.get("confidence_explanation")
+            if conf_exp:
+                lines.append(f"*{conf_exp}*")
+                lines.append("")
             if root_cause.get("summary"):
                 lines.append(root_cause["summary"])
                 lines.append("")
             if root_cause.get("primary_error"):
                 lines.append(f"**Primary error:** {root_cause['primary_error']}")
                 lines.append("")
-            if root_cause.get("suspicious_event"):
-                sev = root_cause["suspicious_event"]
-                lines.append("### First suspicious event")
+
+            # Root cause hypothesis
+            rch = root_cause.get("root_cause_hypothesis")
+            if rch:
+                lines.append("### Root Cause Hypothesis")
                 lines.append("")
-                msg = sev.message if hasattr(sev, "message") else sev.get("message", "N/A")
-                src = sev.source_file if hasattr(sev, "source_file") else sev.get("source_file")
-                line = sev.line_number if hasattr(sev, "line_number") else sev.get("line_number")
+                msg = rch.message if hasattr(rch, "message") else rch.get("message", "N/A")
+                svc = rch.service if hasattr(rch, "service") else rch.get("service")
+                src = rch.source_file if hasattr(rch, "source_file") else rch.get("source_file")
+                line = rch.line_number if hasattr(rch, "line_number") else rch.get("line_number")
                 lines.append(f"- {msg}")
+                if svc:
+                    lines.append(f"  Service: {svc}")
                 if src:
                     lines.append(f"  Source: {src}:{line}" if line else f"  Source: {src}")
                 lines.append("")
 
-        evidence = report.get("evidence", [])
-        if evidence:
-            lines.append("## Supporting Evidence")
-            lines.append("")
-            for ev in evidence:
-                lines.append(f"- {ev.finding if hasattr(ev, 'finding') else ev.get('finding')} "
-                             f"(confidence: {ev.confidence if hasattr(ev, 'confidence') else ev.get('confidence', 'MEDIUM')})")
-            lines.append("")
+            # Supporting evidence
+            supporting = root_cause.get("supporting_evidence", [])
+            if supporting:
+                lines.append("### Supporting Evidence")
+                lines.append("")
+                for ev in supporting:
+                    finding = ev.finding if hasattr(ev, "finding") else ev.get("finding", "")
+                    conf = ev.confidence if hasattr(ev, "confidence") else ev.get("confidence", "MEDIUM")
+                    lines.append(f"- {finding} (confidence: {conf})")
+                lines.append("")
 
+            # Application exception
+            ae = root_cause.get("application_exception")
+            if ae:
+                lines.append("### Application Exception")
+                lines.append("")
+                msg = ae.message if hasattr(ae, "message") else ae.get("message", "N/A")
+                ext = ae.exception_type if hasattr(ae, "exception_type") else ae.get("exception_type")
+                svc = ae.service if hasattr(ae, "service") else ae.get("service")
+                lines.append(f"- {msg}")
+                if ext:
+                    lines.append(f"  Exception type: {ext}")
+                if svc:
+                    lines.append(f"  Service: {svc}")
+                lines.append("")
+
+            # Downstream failures
+            downstream = root_cause.get("downstream_failures", [])
+            if downstream:
+                lines.append("### Downstream Failures")
+                lines.append("")
+                for ev in downstream:
+                    finding = ev.finding if hasattr(ev, "finding") else ev.get("finding", "")
+                    conf = ev.confidence if hasattr(ev, "confidence") else ev.get("confidence", "MEDIUM")
+                    lines.append(f"- {finding} (confidence: {conf})")
+                lines.append("")
+
+            # User-facing impact
+            user_impact = root_cause.get("user_facing_impact", [])
+            if user_impact:
+                lines.append("### User-Facing Impact")
+                lines.append("")
+                for ev in user_impact:
+                    finding = ev.finding if hasattr(ev, "finding") else ev.get("finding", "")
+                    conf = ev.confidence if hasattr(ev, "confidence") else ev.get("confidence", "MEDIUM")
+                    lines.append(f"- {finding} (confidence: {conf})")
+                lines.append("")
+
+        # Legacy cascade_chain (for backward compatibility with old list format)
         cascade = report.get("cascade_chain", [])
-        if cascade:
+        if isinstance(cascade, list) and cascade:
             lines.append("## Cascading Errors")
             lines.append("")
             for ev in cascade:
-                lines.append(f"- {ev.finding if hasattr(ev, 'finding') else ev.get('finding')}")
+                finding = ev.finding if hasattr(ev, "finding") else ev.get("finding", "")
+                lines.append(f"- {finding}")
             lines.append("")
 
         recommendations = report.get("recommendations", [])

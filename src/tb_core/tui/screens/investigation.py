@@ -34,8 +34,6 @@ class InvestigationScreen(Screen):
             return
 
         # Run analysis
-        rules_engine = None
-        from tb_core.analysis.rules import RulesEngine
         rules_engine = RulesEngine()
         analyzer = RootCauseAnalyzer(rules_engine)
         cascade = CascadeAnalyzer(rules_engine)
@@ -48,32 +46,50 @@ class InvestigationScreen(Screen):
             events=inc.related_events,
         )
         analysis = analyzer.analyze(group)
-        cascade_chain = cascade.analyze(group)
-        recommendations = rec_builder.build(group, cascade_chain, analysis)
+        cascade_result = cascade.analyze(group)
+        recommendations = rec_builder.build(group, cascade_result, analysis)
 
         # Left column: summary
         with Vertical(id="left-col"):
             yield Static("Incident Summary", classes="section-label")
             yield Static(analysis.get("summary", "No summary available."), id="incident-summary")
             yield Static("")
-            yield Static(f"Confidence: {analysis.get('confidence', 'LOW')}", id="confidence-line")
+            conf = analysis.get("confidence", "LOW")
+            conf_exp = analysis.get("confidence_explanation", "")
+            yield Static(f"Confidence: {conf}", id="confidence-line")
+            if conf_exp:
+                yield Static(conf_exp, id="confidence-explanation")
             yield Static("")
             yield Static("Primary Error", classes="section-label")
             yield Static(inc.primary_error or "—", id="primary-error")
             yield Static("")
-            yield Static("Suspected Failure Points", classes="section-label")
-            for fp in inc.suspected_failure_points:
-                yield Static(f"• {fp}", id="failure-point")
+            yield Static("Root Cause Hypothesis", classes="section-label")
+            rch = analysis.get("root_cause_hypothesis")
+            if rch:
+                yield Static(f"• {rch.message} [{rch.service or 'unknown service'}]", id="root-cause")
+            else:
+                yield Static("• None identified", id="root-cause")
             yield Static("")
-            yield Static("Possible Root Causes", classes="section-label")
-            for cause in analysis.get("possible_causes", []):
-                yield Static(f"• {cause.finding}", id="root-cause")
+            yield Static("Supporting Evidence", classes="section-label")
+            for ev in analysis.get("supporting_evidence", []):
+                yield Static(f"• {ev.finding}", id="evidence-item")
+            yield Static("")
+            yield Static("Application Exception", classes="section-label")
+            ae = analysis.get("application_exception")
+            if ae:
+                yield Static(f"• {ae.message} [{ae.exception_type or 'unknown'}]", id="app-exception")
+            else:
+                yield Static("• None identified", id="app-exception")
 
-        # Right column: cascade + recommendations
+        # Right column: downstream + user-facing + recommendations
         with Vertical(id="right-col"):
-            yield Static("Cascading Errors", classes="section-label")
-            for ce in cascade_chain:
+            yield Static("Downstream Failures", classes="section-label")
+            for ce in analysis.get("downstream_failures", []):
                 yield Static(f"• {ce.finding}", id="cascade-item")
+            yield Static("")
+            yield Static("User-Facing Impact", classes="section-label")
+            for ui in analysis.get("user_facing_impact", []):
+                yield Static(f"• {ui.finding}", id="user-impact-item")
             yield Static("")
             yield Static("Suggested Debugging Steps", classes="section-label")
             for i, step in enumerate(recommendations, 1):

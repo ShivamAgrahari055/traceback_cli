@@ -158,30 +158,6 @@ ScrollableContainer {
     background: #0f111a;
 }
 
-TimelineItem {
-    border: solid #334155;
-    background: #171c2b;
-    margin: 0 0 1 0;
-    padding: 1;
-}
-
-TimelineItem--error {
-    border-left: thick #f87171;
-}
-
-TimelineItem--warning {
-    border-left: thick #fbbf24;
-}
-
-TimelineItem--info {
-    border-left: thick #60a5fa;
-}
-
-TimelineItem--critical {
-    border-left: thick #f87171;
-    text-style: bold;
-}
-
 /* Input */
 Input {
     background: #171c2b;

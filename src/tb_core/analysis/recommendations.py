@@ -18,29 +18,38 @@ from tb_core.analysis.root_cause import RootCauseAnalyzer
 class RecommendationBuilder:
     """Builds actionable, evidence-backed debugging recommendations."""
 
-    def build(self, group, cascade_chain: List[Evidence],
-              root_cause: Dict) -> List[str]:
+    def build(self, group, cascade_result: Dict,
+              root_cause_analysis: Dict) -> List[str]:
         recommendations = []
 
         # Add root-cause-based steps
-        suspicious = root_cause.get("suspicious_event")
+        suspicious = root_cause_analysis.get("suspicious_event")
         if suspicious:
             recommendations.append(
                 f"Start by investigating: {suspicious.message[:100]}"
             )
 
-        # Add cascade-based steps
-        for ev in cascade_chain:
+        # Add root-cause hypothesis step
+        rch = root_cause_analysis.get("root_cause_hypothesis")
+        if rch:
             recommendations.append(
-                f"Check the upstream dependency indicated by: {ev.finding[:100]}"
+                f"Investigate the initial failure: {rch.message[:100]} "
+                f"[{rch.service or 'unknown service'}]"
             )
 
-        # Add pattern-based recommendations
-        root_causes = root_cause.get("possible_causes", [])
-        for cause in root_causes:
+        # Add cascade-based steps (downstream failures)
+        downstream = cascade_result.get("downstream_failures", [])
+        for ev in downstream:
+            recommendations.append(
+                f"Check the downstream dependency indicated by: {ev.finding[:100]}"
+            )
+
+        # Add pattern-based recommendations from supporting evidence
+        supporting = root_cause_analysis.get("supporting_evidence", [])
+        for cause in supporting:
             if cause.event_ids:
                 recommendations.append(
-                    f"Review the root-cause event ({cause.event_ids[0]}) in the original log"
+                    f"Review the supporting event ({cause.event_ids[0]}) in the original log"
                 )
 
         # De-dupe while preserving order
@@ -58,11 +67,11 @@ class RecommendationBuilder:
         return unique
 
     def build_full_report(self, group, analysis: Dict,
-                          cascade_chain: List[Evidence]) -> Dict:
+                          cascade_result: Dict) -> Dict:
         """Return the complete recommendation report for an incident."""
         return {
             "incident_title": group.title,
-            "recommended_steps": self.build(group, cascade_chain, analysis),
+            "recommended_steps": self.build(group, cascade_result, analysis),
             "analysis_timestamp": datetime.utcnow().isoformat(),
             "evidence_traceable": True,
         }
