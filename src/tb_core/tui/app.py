@@ -33,7 +33,7 @@ from tb_core.tui.screens.investigation import InvestigationScreen
 class TraceBackApp(App):
     """TraceBack TUI application."""
 
-    CSS_PATH = "tui/styles.tcss"
+    CSS_PATH = "styles.tcss"
 
     def __init__(
         self,

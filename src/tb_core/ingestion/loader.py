@@ -88,7 +88,7 @@ class LogLoader:
         events: List[Event] = []
         with open(path, encoding="utf-8", errors="replace") as fh:
             for line in fh:
-                ev = parser.parse_line(line)
+                ev = parser.parse_line(line, source_file=str(path))
                 if ev:
                     events.append(ev)
         return events

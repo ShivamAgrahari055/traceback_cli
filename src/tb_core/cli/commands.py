@@ -292,6 +292,21 @@ def report_cmd(
             )
         )
 
+    # Re-run analysis to populate RCA data for the report
+    rules_engine = RulesEngine()
+    analyzer = RootCauseAnalyzer(rules_engine)
+    cascade = CascadeAnalyzer(rules_engine)
+    rec_builder = RecommendationBuilder()
+
+    group = IncidentGroup(
+        title=row["title"] or "Incident",
+        events=event_objs,
+    )
+    root_cause = analyzer.analyze(group)
+    cascade_chain = cascade.analyze(group)
+    recommendations = rec_builder.build(group, cascade_chain, root_cause)
+    evidence = group.evidence
+
     report = {
         "incident": Incident(
             incident_id=incident_id,
@@ -310,9 +325,13 @@ def report_cmd(
         "primary_error": row["primary_error"] or "Unknown",
         "start_time": row["start_time"],
         "end_time": row["end_time"],
-        "events": events,
-        "affected_services": json.loads(row["affected_services"]) if row["affected_services"] else [],
-        "confidence": row["confidence"] or "MEDIUM",
+        "events": event_objs,
+        "affected_services": list({e.service for e in event_objs if e.service}),
+        "confidence": root_cause.get("confidence", row["confidence"] or "MEDIUM"),
+        "root_cause": root_cause,
+        "cascade_chain": cascade_chain,
+        "recommendations": recommendations,
+        "evidence": evidence,
         "report_path": row["report_path"],
     }
 
