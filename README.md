@@ -41,10 +41,12 @@ receives:
 
 ## Installation
 
+### Clone and install
+
 ```bash
 # Clone the repository
-git clone <repository-url>
-cd traceback-cli
+git clone https://github.com/ShivamAgrahari055/tr.git
+cd tr
 
 # Install dependencies with uv
 uv sync
@@ -53,7 +55,40 @@ uv sync
 pip install -e .
 ```
 
-The `traceback` command is installed as a console script:
+### Windows PowerShell PATH setup (required for the `traceback` command)
+
+On Windows, pip installs the `traceback` executable into Python's `Scripts` folder, which may not be on your PATH. You'll see `traceback : The term 'traceback' is not recognized` if it's missing.
+
+**Option A — Add to PATH for the current session only:**
+
+```powershell
+# Find Python's directory and add its Scripts folder to PATH
+$pyDir = Split-Path -Parent (Get-Command python).Source
+$scriptsDir = Join-Path $pyDir "Scripts"
+$env:Path = $env:Path + ";" + $scriptsDir
+
+# Now the traceback command works
+traceback analyse examples/microservices/
+```
+
+**Option B — Add to PATH permanently (all future PowerShell windows):**
+
+```powershell
+$pyDir = Split-Path -Parent (Get-Command python).Source
+$scriptsDir = Join-Path $pyDir "Scripts"
+[Environment]::SetEnvironmentVariable("Path", $env:Path + ";" + $scriptsDir, "User")
+# Restart PowerShell after running this
+```
+
+**Option C — Use `python -m` directly (no PATH changes needed):**
+
+```powershell
+python -m tb_core.cli.commands analyse examples/microservices/
+python -m tb_core.cli.commands tui
+python -m tb_core.cli.commands report TB-TRC-LOGIN-001 --format markdown
+```
+
+After installing, verify:
 
 ```bash
 traceback --version
